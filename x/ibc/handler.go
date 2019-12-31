@@ -2,6 +2,7 @@ package ibc
 
 import (
 	"fmt"
+	ibcaccount "github.com/cosmos/cosmos-sdk/x/ibc/27-ibcaccount"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	client "github.com/cosmos/cosmos-sdk/x/ibc/02-client"
@@ -60,8 +61,21 @@ func NewHandler(k Keeper) sdk.Handler {
 			return transfer.HandleMsgTransfer(ctx, k.TransferKeeper, msg)
 
 		case transfer.MsgRecvPacket:
-			return transfer.HandleMsgRecvPacket(ctx, k.TransferKeeper, msg)
+			data, err := k.IbcaccountKeeper.UnmarshalPacketData(msg.Packet)
+			if err != nil {
+				return sdk.ErrUnknownRequest(err.Error()).Result()
+			}
 
+			switch packetData := data.(type) {
+			case ibcaccount.RegisterIBCAccountPacketData:
+				sourcePort := msg.Packet.GetSourcePort()
+				sourceChannel := msg.Packet.GetSourceChannel()
+				return ibcaccount.HandleRegisterIBCAccount(ctx, k.IbcaccountKeeper, sourcePort, sourceChannel, packetData)
+			case ibcaccount.RunTxPacketData:
+				return ibcaccount.HandleRunTx(ctx, k.IbcaccountKeeper, packetData)
+			}
+
+			return transfer.HandleMsgRecvPacket(ctx, k.TransferKeeper, msg)
 		default:
 			errMsg := fmt.Sprintf("unrecognized IBC message type: %T", msg)
 			return sdk.ErrUnknownRequest(errMsg).Result()

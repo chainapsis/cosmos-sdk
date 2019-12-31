@@ -233,7 +233,7 @@ func NewSimApp(
 		staking.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.SlashingKeeper.Hooks()),
 	)
 
-	app.IBCKeeper = ibc.NewKeeper(app.cdc, keys[ibc.StoreKey], ibc.DefaultCodespace, app.BankKeeper, app.SupplyKeeper)
+	app.IBCKeeper = ibc.NewKeeper(app.cdc, keys[ibc.StoreKey], ibc.DefaultCodespace, app.BankKeeper, app.SupplyKeeper, app.AccountKeeper, app.Router())
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.

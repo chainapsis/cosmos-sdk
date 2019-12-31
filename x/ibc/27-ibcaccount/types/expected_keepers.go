@@ -2,12 +2,12 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/exported"
 	clientexported "github.com/cosmos/cosmos-sdk/x/ibc/02-client/exported"
 	connection "github.com/cosmos/cosmos-sdk/x/ibc/03-connection"
 	channel "github.com/cosmos/cosmos-sdk/x/ibc/04-channel"
 	channelexported "github.com/cosmos/cosmos-sdk/x/ibc/04-channel/exported"
 	commitment "github.com/cosmos/cosmos-sdk/x/ibc/23-commitment"
-	ibcaccountexported "github.com/cosmos/cosmos-sdk/x/ibc/27-ibcaccount/exported"
 )
 
 // ClientKeeper defines the expected IBC client keeper
@@ -29,8 +29,8 @@ type ChannelKeeper interface {
 }
 
 type AccountKeeper interface {
-	NewAccountWithAddress(ctx sdk.Context, addr sdk.AccAddress) ibcaccountexported.Account
-	NewAccount(ctx sdk.Context, acc ibcaccountexported.Account) ibcaccountexported.Account
-	GetAccount(ctx sdk.Context, addr sdk.AccAddress) ibcaccountexported.Account
-	SetAccount(ctx sdk.Context, acc ibcaccountexported.Account)
+	NewAccountWithAddress(ctx sdk.Context, addr sdk.AccAddress) exported.Account
+	NewAccount(ctx sdk.Context, acc exported.Account) exported.Account
+	GetAccount(ctx sdk.Context, addr sdk.AccAddress) exported.Account
+	SetAccount(ctx sdk.Context, acc exported.Account)
 }

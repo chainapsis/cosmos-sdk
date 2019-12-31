@@ -17,6 +17,7 @@ import (
 	channel "github.com/cosmos/cosmos-sdk/x/ibc/04-channel"
 	transfer "github.com/cosmos/cosmos-sdk/x/ibc/20-transfer"
 	commitment "github.com/cosmos/cosmos-sdk/x/ibc/23-commitment"
+	ibcaccount "github.com/cosmos/cosmos-sdk/x/ibc/27-ibcaccount"
 	"github.com/cosmos/cosmos-sdk/x/ibc/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/ibc/client/rest"
 	"github.com/cosmos/cosmos-sdk/x/ibc/types"
@@ -45,6 +46,7 @@ func (AppModuleBasic) RegisterCodec(cdc *codec.Codec) {
 	channel.RegisterCodec(cdc)
 	transfer.RegisterCodec(cdc)
 	commitment.RegisterCodec(cdc)
+	ibcaccount.RegisterCodec(cdc)
 }
 
 // DefaultGenesis returns default genesis state as raw bytes for the ibc
