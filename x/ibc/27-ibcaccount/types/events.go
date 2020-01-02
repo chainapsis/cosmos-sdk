@@ -13,8 +13,5 @@ const (
 
 // IBC ibcaccount events vars
 var (
-	EventTypeRegisterIBCAccount = MsgRegisterIBCAccount{}.Type()
-	EventTypeRunTx              = MsgRunTx{}.Type()
-
 	AttributeValueCategory = fmt.Sprintf("%s_%s", ibctypes.ModuleName, SubModuleName)
 )
