@@ -1,19 +1,18 @@
 package ibc
 
 import (
-	"fmt"
-	ibcaccount "github.com/cosmos/cosmos-sdk/x/ibc/27-ibcaccount"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	client "github.com/cosmos/cosmos-sdk/x/ibc/02-client"
 	connection "github.com/cosmos/cosmos-sdk/x/ibc/03-connection"
 	channel "github.com/cosmos/cosmos-sdk/x/ibc/04-channel"
 	transfer "github.com/cosmos/cosmos-sdk/x/ibc/20-transfer"
+	ibcaccount "github.com/cosmos/cosmos-sdk/x/ibc/27-ibcaccount"
 )
 
 // NewHandler defines the IBC handler
 func NewHandler(k Keeper) sdk.Handler {
-	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
+	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
@@ -63,7 +62,7 @@ func NewHandler(k Keeper) sdk.Handler {
 		case transfer.MsgRecvPacket:
 			data, err := k.IbcaccountKeeper.UnmarshalPacketData(msg.Packet)
 			if err != nil {
-				return sdk.ErrUnknownRequest(err.Error()).Result()
+				return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 			}
 
 			switch packetData := data.(type) {
@@ -77,8 +76,7 @@ func NewHandler(k Keeper) sdk.Handler {
 
 			return transfer.HandleMsgRecvPacket(ctx, k.TransferKeeper, msg)
 		default:
-			errMsg := fmt.Sprintf("unrecognized IBC message type: %T", msg)
-			return sdk.ErrUnknownRequest(errMsg).Result()
+			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized IBC message type: %T", msg)
 		}
 	}
 }

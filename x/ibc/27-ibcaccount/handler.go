@@ -5,10 +5,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/ibc/27-ibcaccount/types"
 )
 
-func HandleRegisterIBCAccount(ctx sdk.Context, k Keeper, sourcePort, sourceChannel string, packet RegisterIBCAccountPacketData) sdk.Result {
+func HandleRegisterIBCAccount(ctx sdk.Context, k Keeper, sourcePort, sourceChannel string, packet RegisterIBCAccountPacketData) (*sdk.Result, error) {
 	err := k.RegisterIBCAccount(ctx, sourcePort, sourceChannel, packet.Salt)
 	if err != nil {
-		return sdk.ResultFromError(err)
+		return nil, err
 	}
 
 	ctx.EventManager().EmitEvent(
@@ -18,13 +18,15 @@ func HandleRegisterIBCAccount(ctx sdk.Context, k Keeper, sourcePort, sourceChann
 		),
 	)
 
-	return sdk.Result{Events: ctx.EventManager().Events()}
+	return &sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}, nil
 }
 
-func HandleRunTx(ctx sdk.Context, k Keeper, packet RunTxPacketData) sdk.Result {
+func HandleRunTx(ctx sdk.Context, k Keeper, packet RunTxPacketData) (*sdk.Result, error) {
 	interchainAccountTx, err := k.DeserializeTx(ctx, packet.TxBytes)
 	if err != nil {
-		return sdk.ErrInternal(err.Error()).Result()
+		return nil, err
 	}
-	return k.RunTx(ctx, interchainAccountTx)
+	return &k.RunTx(ctx, interchainAccountTx), nil
 }

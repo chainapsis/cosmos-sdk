@@ -20,7 +20,6 @@ type Keeper struct {
 	storeKey        sdk.StoreKey
 	cdc             *codec.Codec
 	counterpartyCdc *codec.Codec
-	codespace       sdk.CodespaceType
 
 	// Capability key and port to which ICS20 is binded. Used for packet relaying.
 	boundedCapability sdk.CapabilityKey
@@ -35,7 +34,7 @@ type Keeper struct {
 
 // NewKeeper creates a new IBC interchain-account Keeper instance
 func NewKeeper(
-	cdc *codec.Codec, counterpartyCdc *codec.Codec, key sdk.StoreKey, codespace sdk.CodespaceType,
+	cdc *codec.Codec, counterpartyCdc *codec.Codec, key sdk.StoreKey,
 	capKey sdk.CapabilityKey, clientKeeper types.ClientKeeper,
 	connnectionKeeper types.ConnectionKeeper, channelKeeper types.ChannelKeeper,
 	accountKeeper types.AccountKeeper, router sdk.Router,
@@ -44,7 +43,6 @@ func NewKeeper(
 		storeKey:          key,
 		cdc:               cdc,
 		counterpartyCdc:   counterpartyCdc,
-		codespace:         sdk.CodespaceType(fmt.Sprintf("%s/%s", codespace, types.DefaultCodespace)), // "ibc/interchain-account",
 		boundedCapability: capKey,
 		clientKeeper:      clientKeeper,
 		connectionKeeper:  connnectionKeeper,
