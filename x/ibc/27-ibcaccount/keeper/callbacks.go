@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	channel "github.com/cosmos/cosmos-sdk/x/ibc/04-channel"
 	channelexported "github.com/cosmos/cosmos-sdk/x/ibc/04-channel/exported"
 	port "github.com/cosmos/cosmos-sdk/x/ibc/05-port"
@@ -23,19 +24,20 @@ func (k Keeper) OnChanOpenInit(
 ) error {
 	// only ordered channels allowed
 	if order != channel.ORDERED {
-		return channel.ErrInvalidChannel(k.codespace, "channel must be ORDERED")
+		return sdkerrors.Wrap(channel.ErrInvalidChannel, "channel must be ORDERED")
 	}
 
 	// NOTE: here the capability key name defines the port ID of the counterparty
 	// only allow channels to "interchain-account" port on counterparty chain
 	if counterparty.PortID != k.boundedCapability.Name() {
-		return port.ErrInvalidPort(
-			k.codespace,
-			fmt.Sprintf("counterparty port ID doesn't match the capability key (%s ≠ %s)", counterparty.PortID, k.boundedCapability.Name()))
+		return sdkerrors.Wrapf(
+			port.ErrInvalidPort,
+			"counterparty port ID doesn't match the capability key (%s ≠ %s)", counterparty.PortID, k.boundedCapability.Name(),
+		)
 	}
 
 	if strings.TrimSpace(version) != "" {
-		return ibctypes.ErrInvalidVersion(k.codespace, "version must be blank")
+		return sdkerrors.Wrap(ibctypes.ErrInvalidVersion, "version must be blank")
 	}
 
 	// NOTE: as the escrow address is generated from both the port and channel IDs
@@ -56,23 +58,24 @@ func (k Keeper) OnChanOpenTry(
 ) error {
 	// only ordered channels allowed
 	if order != channel.ORDERED {
-		return channel.ErrInvalidChannel(k.codespace, "channel must be ORDERED")
+		return sdkerrors.Wrap(channel.ErrInvalidChannel, "channel must be ORDERED")
 	}
 
 	// NOTE: here the capability key name defines the port ID of the counterparty
 	// only allow channels to "interchain-account" port on counterparty chain
 	if counterparty.PortID != k.boundedCapability.Name() {
-		return port.ErrInvalidPort(
-			k.codespace,
-			fmt.Sprintf("counterparty port ID doesn't match the capability key (%s ≠ %s)", counterparty.PortID, k.boundedCapability.Name()))
+		return sdkerrors.Wrapf(
+			port.ErrInvalidPort,
+			"counterparty port ID doesn't match the capability key (%s ≠ %s)", counterparty.PortID, k.boundedCapability.Name(),
+		)
 	}
 
 	if strings.TrimSpace(version) != "" {
-		return ibctypes.ErrInvalidVersion(k.codespace, "version must be blank")
+		return sdkerrors.Wrap(ibctypes.ErrInvalidVersion, "version must be blank")
 	}
 
 	if strings.TrimSpace(counterpartyVersion) != "" {
-		return ibctypes.ErrInvalidVersion(k.codespace, "counterparty version must be blank")
+		return sdkerrors.Wrap(ibctypes.ErrInvalidVersion, "counterparty version must be blank")
 	}
 
 	// NOTE: as the escrow address is generated from both the port and channel IDs
@@ -83,7 +86,7 @@ func (k Keeper) OnChanOpenTry(
 // nolint: unused
 func (k Keeper) OnChanOpenAck(ctx sdk.Context, portID, channelID string, version string) error {
 	if strings.TrimSpace(version) != "" {
-		return ibctypes.ErrInvalidVersion(k.codespace, "version must be blank")
+		return sdkerrors.Wrap(ibctypes.ErrInvalidVersion, "version must be blank")
 	}
 	return nil
 }

@@ -9,5 +9,5 @@ type InterchainAccountTx struct {
 }
 
 type IbcPacketData interface {
-	ValidateBasic() sdk.Error
+	ValidateBasic() error
 }

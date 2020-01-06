@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 const (
@@ -17,9 +16,6 @@ const (
 
 	// QuerierRoute is the querier route for IBC interchain-account
 	QuerierRoute = SubModuleName
-
-	// DefaultCodespace is the default error codespace for IBC interchain-account
-	DefaultCodespace sdk.CodespaceType = SubModuleName
 )
 
 func GetIdentifier(sourcePort, sourceChannel string) string {

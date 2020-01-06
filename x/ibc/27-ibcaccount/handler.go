@@ -28,5 +28,5 @@ func HandleRunTx(ctx sdk.Context, k Keeper, packet RunTxPacketData) (*sdk.Result
 	if err != nil {
 		return nil, err
 	}
-	return &k.RunTx(ctx, interchainAccountTx), nil
+	return k.RunTx(ctx, interchainAccountTx)
 }

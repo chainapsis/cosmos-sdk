@@ -14,9 +14,9 @@ func (k Keeper) RegisterIBCAccount(ctx sdk.Context, sourcePort, sourceChannel, s
 	if err != nil {
 		return err
 	}
-	sdkErr := k.CreateAccount(ctx, address)
-	if sdkErr != nil {
-		return sdkErr
+	err = k.CreateAccount(ctx, address)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -28,7 +28,7 @@ func (k Keeper) CreateAccount(ctx sdk.Context, address sdk.AccAddress) error {
 	account := k.accountKeeper.GetAccount(ctx, address)
 	if account != nil {
 		if account.GetSequence() != 1 || account.GetPubKey() != nil {
-			return types.ErrAccountAlreadyExist(types.DefaultCodespace, address.String())
+			return sdkerrors.Wrap(types.ErrAccountAlreadyExist, account.String())
 		}
 	} else {
 		account = k.accountKeeper.NewAccountWithAddress(ctx, address)
@@ -92,7 +92,7 @@ func (k Keeper) CreateOutgoingPacket(
 
 		return k.channelKeeper.SendPacket(ctx, packet, k.boundedCapability)
 	} else {
-		return types.ErrUnsupportedChainType(types.DefaultCodespace, chainType)
+		return sdkerrors.Wrap(types.ErrUnsupportedChainType, chainType)
 	}
 }
 
@@ -103,26 +103,23 @@ func (k Keeper) DeserializeTx(ctx sdk.Context, txBytes []byte) (types.Interchain
 	return tx, err
 }
 
-func (k Keeper) RunTx(ctx sdk.Context, tx types.InterchainAccountTx) sdk.Result {
+func (k Keeper) RunTx(ctx sdk.Context, tx types.InterchainAccountTx) (*sdk.Result, error) {
 	err := k.AuthenticateTx(ctx, tx)
 	if err != nil {
-		return err.Result()
+		return nil, err
 	}
 
 	msgs := tx.Msgs
 
 	logs := make([]string, 0, len(msgs))
 	data := make([]byte, 0, len(msgs))
-	var (
-		code      sdk.CodeType
-		codespace sdk.CodespaceType
-	)
+
 	events := ctx.EventManager().Events()
 
 	for _, msg := range msgs {
-		result := k.RunMsg(ctx, msg)
-		if result.IsOK() == false {
-			return result
+		result, err := k.RunMsg(ctx, msg)
+		if err != nil {
+			return result, err
 		}
 
 		data = append(data, result.Data...)
@@ -132,25 +129,16 @@ func (k Keeper) RunTx(ctx sdk.Context, tx types.InterchainAccountTx) sdk.Result 
 		if len(result.Log) > 0 {
 			logs = append(logs, result.Log)
 		}
-
-		if !result.IsOK() {
-			code = result.Code
-			codespace = result.Codespace
-			break
-		}
 	}
 
-	return sdk.Result{
-		Code:      code,
-		Codespace: codespace,
-		Data:      data,
-		Log:       strings.TrimSpace(strings.Join(logs, ",")),
-		GasUsed:   ctx.GasMeter().GasConsumed(),
-		Events:    events,
-	}
+	return &sdk.Result{
+		Data:   data,
+		Log:    strings.TrimSpace(strings.Join(logs, ",")),
+		Events: events,
+	}, nil
 }
 
-func (k Keeper) AuthenticateTx(ctx sdk.Context, tx types.InterchainAccountTx) sdk.Error {
+func (k Keeper) AuthenticateTx(ctx sdk.Context, tx types.InterchainAccountTx) error {
 	msgs := tx.Msgs
 
 	seen := map[string]bool{}
@@ -171,19 +159,18 @@ func (k Keeper) AuthenticateTx(ctx sdk.Context, tx types.InterchainAccountTx) sd
 		// Ignore that which chain makes the interchain account.
 		// Assume that only one to one communication exists for prototype version.
 		if len(path) == 0 {
-			return sdk.ErrUnauthorized("unauthorized")
+			return sdkerrors.ErrUnauthorized
 		}
 	}
 
 	return nil
 }
 
-func (k Keeper) RunMsg(ctx sdk.Context, msg sdk.Msg) sdk.Result {
-	//hander := k.router.Route(msg.Route())
-	//if hander == nil {
-	//	return sdk.ErrInternal("invalid route").Result()
-	//}
-	//
-	//return hander(ctx, msg)
-	return sdk.Result{}
+func (k Keeper) RunMsg(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
+	hander := k.router.Route(msg.Route())
+	if hander == nil {
+		return nil, types.ErrInvalidRoute
+	}
+
+	return hander(ctx, msg)
 }

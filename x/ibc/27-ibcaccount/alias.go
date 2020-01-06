@@ -7,7 +7,6 @@ import (
 
 const (
 	DefaultPacketTimeout = keeper.DefaultPacketTimeout
-	DefaultCodespace     = types.DefaultCodespace
 	SubModuleName        = types.SubModuleName
 	StoreKey             = types.StoreKey
 	RouterKey            = types.RouterKey
@@ -18,6 +17,11 @@ var (
 	NewKeeper     = keeper.NewKeeper
 	RegisterCodec = types.RegisterCodec
 	GetIdentifier = types.GetIdentifier
+
+	// Errors
+	ErrAccountAlreadyExist  = types.ErrAccountAlreadyExist
+	ErrUnsupportedChainType = types.ErrUnsupportedChainType
+	ErrContentIsEmpty       = types.ErrContentIsEmpty
 
 	// variable aliases
 	ModuleCdc = types.ModuleCdc
