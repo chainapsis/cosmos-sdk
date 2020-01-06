@@ -9,7 +9,12 @@ import (
 	"strings"
 )
 
-func (k Keeper) RegisterIBCAccount(ctx sdk.Context, sourcePort, sourceChannel, salt string) error {
+func (k Keeper) RegisterIBCAccount(
+	ctx sdk.Context,
+	sourcePort,
+	sourceChannel,
+	salt string,
+) error {
 	address, err := k.GenerateAddress(types.GetIdentifier(sourcePort, sourceChannel), salt)
 	if err != nil {
 		return err

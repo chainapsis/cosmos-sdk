@@ -68,7 +68,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 	suite.createConnection(connection.OPEN)
 }
 
-func (suite *KeeperTestSuite) TestKeeper_UnmarshalPacketData_RunTx() {
+func (suite *KeeperTestSuite) TestUnmarshalPacketData_RunTx() {
 	var msgs []sdk.Msg
 	interchainAccountTx := types.InterchainAccountTx{Msgs: msgs}
 
@@ -97,7 +97,7 @@ func (suite *KeeperTestSuite) TestKeeper_UnmarshalPacketData_RunTx() {
 	suite.Equal(RunTxPD, runTxData)
 }
 
-func (suite *KeeperTestSuite) TestKeeper_UnmarshalPacketData_RegisterIbcAccount() {
+func (suite *KeeperTestSuite) TestUnmarshalPacketData_RegisterIbcAccount() {
 	RegisterIbcAccountPD := types.RegisterIBCAccountPacketData{
 		Salt: "test salt",
 	}
