@@ -39,7 +39,6 @@ func NewKeeper(
 	connnectionKeeper types.ConnectionKeeper, channelKeeper types.ChannelKeeper,
 	bankKeeper types.BankKeeper, supplyKeeper types.SupplyKeeper,
 ) Keeper {
-
 	// ensure ibc transfer module account is set
 	if addr := supplyKeeper.GetModuleAddress(types.GetModuleAccountName()); addr == nil {
 		panic("the IBC transfer module account has not been set")
