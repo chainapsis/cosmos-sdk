@@ -22,12 +22,12 @@ const (
 	testClient     = "test-client"
 	testClientType = clientexported.Tendermint
 
-	testSeq                = 123
-	testConnection         = "test-connection"
-	testSourcePort         = "test-source-port"
-	testDestinationPort    = "test-destination-port"
-	testSourceChannel      = "test-source-channel"
-	testDestinationChannel = "test-destination-channel"
+	testSeq        = 123
+	testConnection = "test-connection"
+	testPort1      = "interchainaccount"
+	testPort2      = "test-port2"
+	testChannel1   = "test-channel1"
+	testChannel2   = "test-channel2"
 
 	testChannelOrdered = channel.ORDERED
 	testChannelVersion = "1.0"
@@ -84,10 +84,10 @@ func (suite *KeeperTestSuite) TestUnmarshalPacketData_RunTx() {
 	RunTxPacket := channel.NewPacket(
 		testSeq,
 		uint64(suite.ctx.BlockHeight())+1000,
-		testSourcePort,
-		testSourceChannel,
-		testDestinationPort,
-		testDestinationChannel,
+		testPort1,
+		testChannel1,
+		testPort2,
+		testChannel2,
 		runTxPdBytes,
 	)
 
@@ -107,10 +107,10 @@ func (suite *KeeperTestSuite) TestUnmarshalPacketData_RegisterIbcAccount() {
 	RegisterIbcAccountPacket := channel.NewPacket(
 		testSeq,
 		uint64(suite.ctx.BlockHeight())+1000,
-		testSourcePort,
-		testSourceChannel,
-		testDestinationPort,
-		testDestinationChannel,
+		testPort1,
+		testChannel1,
+		testPort2,
+		testChannel2,
 		registerIbcAccountPdBytes,
 	)
 
