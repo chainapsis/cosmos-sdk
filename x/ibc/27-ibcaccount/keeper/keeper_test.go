@@ -22,7 +22,9 @@ const (
 	testClient     = "test-client"
 	testClientType = clientexported.Tendermint
 
-	testSeq        = 123
+	testSeq  = 100
+	testSalt = "test-salt"
+
 	testConnection = "test-connection"
 	testPort1      = "interchainaccount"
 	testPort2      = "test-port2"

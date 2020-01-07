@@ -177,7 +177,7 @@ func (k Keeper) AuthenticateTx(ctx sdk.Context, tx types.InterchainAccountTx) er
 }
 
 func (k Keeper) RunMsg(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
-	hander := k.router.Route(msg.Route())
+	hander := k.router.Route(ctx, msg.Route())
 	if hander == nil {
 		return nil, types.ErrInvalidRoute
 	}
