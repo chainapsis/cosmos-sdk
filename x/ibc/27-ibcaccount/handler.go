@@ -23,10 +23,10 @@ func HandleRegisterIBCAccount(ctx sdk.Context, k Keeper, sourcePort, sourceChann
 	}, nil
 }
 
-func HandleRunTx(ctx sdk.Context, k Keeper, packet RunTxPacketData) (*sdk.Result, error) {
+func HandleRunTx(ctx sdk.Context, k Keeper, sourcePort, sourceChannel string, packet RunTxPacketData) (*sdk.Result, error) {
 	interchainAccountTx, err := k.DeserializeTx(ctx, packet.TxBytes)
 	if err != nil {
 		return nil, err
 	}
-	return k.RunTx(ctx, interchainAccountTx)
+	return k.RunTx(ctx, sourcePort, sourceChannel, interchainAccountTx)
 }

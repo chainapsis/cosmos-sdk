@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"bytes"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	channel "github.com/cosmos/cosmos-sdk/x/ibc/04-channel"
@@ -123,8 +124,9 @@ func (k Keeper) DeserializeTx(ctx sdk.Context, txBytes []byte) (types.Interchain
 	return tx, err
 }
 
-func (k Keeper) RunTx(ctx sdk.Context, tx types.InterchainAccountTx) (*sdk.Result, error) {
-	err := k.AuthenticateTx(ctx, tx)
+func (k Keeper) RunTx(ctx sdk.Context, sourcePort, sourceChannel string, tx types.InterchainAccountTx) (*sdk.Result, error) {
+	identifier := types.GetIdentifier(sourcePort, sourceChannel)
+	err := k.AuthenticateTx(ctx, tx, identifier)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +160,7 @@ func (k Keeper) RunTx(ctx sdk.Context, tx types.InterchainAccountTx) (*sdk.Resul
 	}, nil
 }
 
-func (k Keeper) AuthenticateTx(ctx sdk.Context, tx types.InterchainAccountTx) error {
+func (k Keeper) AuthenticateTx(ctx sdk.Context, tx types.InterchainAccountTx, identifier string) error {
 	msgs := tx.Msgs
 
 	seen := map[string]bool{}
@@ -175,10 +177,9 @@ func (k Keeper) AuthenticateTx(ctx sdk.Context, tx types.InterchainAccountTx) er
 	store := ctx.KVStore(k.storeKey)
 
 	for _, signer := range signers {
+		// Check where the interchain account is made from.
 		path := store.Get(signer)
-		// Ignore that which chain makes the interchain account.
-		// Assume that only one to one communication exists for prototype version.
-		if len(path) == 0 {
+		if !bytes.Equal(path, []byte(identifier)) {
 			return sdkerrors.ErrUnauthorized
 		}
 	}
