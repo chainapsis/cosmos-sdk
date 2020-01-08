@@ -17,8 +17,11 @@ const (
 
 // Keeper defines the IBC transfer keeper
 type Keeper struct {
-	storeKey        sdk.StoreKey
-	cdc             *codec.Codec
+	storeKey sdk.StoreKey
+	cdc      *codec.Codec
+	// This field us used to marshal transaction for counterparty chain.
+	// Currently, we support only one counterparty chain per interchain account keeper.
+	// TODO: support multiple counterparty codec.
 	counterpartyCdc *codec.Codec
 
 	// Capability key and port to which ICS20 is binded. Used for packet relaying.
