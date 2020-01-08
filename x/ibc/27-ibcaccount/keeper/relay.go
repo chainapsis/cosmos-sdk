@@ -20,11 +20,12 @@ func (k Keeper) RegisterIBCAccount(
 		return sdkerrors.Wrap(channel.ErrChannelNotFound, sourceChannel)
 	}
 
-	address, err := k.GenerateAddress(types.GetIdentifier(sourcePort, sourceChannel), salt)
+	identifier := types.GetIdentifier(sourcePort, sourceChannel)
+	address, err := k.GenerateAddress(identifier, salt)
 	if err != nil {
 		return err
 	}
-	err = k.CreateAccount(ctx, address)
+	err = k.CreateAccount(ctx, address, identifier)
 	if err != nil {
 		return err
 	}
@@ -32,13 +33,19 @@ func (k Keeper) RegisterIBCAccount(
 	return nil
 }
 
-func (k Keeper) CreateAccount(ctx sdk.Context, address sdk.AccAddress) error {
-	// Currently, it seems that there is no way to get the information of counterparty chain.
-	// So, just don't use path for hackathon version.
+func (k Keeper) CreateAccount(ctx sdk.Context, address sdk.AccAddress, identifier string) error {
 	account := k.accountKeeper.GetAccount(ctx, address)
+	// Don't block even if there is normal account,
+	// because attackers can distrupt to create an interchain account
+	// by sending some assets to estimated address in advance.
 	if account != nil {
-		if account.GetSequence() != 1 || account.GetPubKey() != nil {
+		if account.GetSequence() != 0 || account.GetPubKey() != nil {
+			// If account is interchain account or is usable by someone.
 			return sdkerrors.Wrap(types.ErrAccountAlreadyExist, account.String())
+		}
+		err := account.SetSequence(1)
+		if err != nil {
+			return err
 		}
 	} else {
 		account = k.accountKeeper.NewAccountWithAddress(ctx, address)
@@ -49,12 +56,15 @@ func (k Keeper) CreateAccount(ctx sdk.Context, address sdk.AccAddress) error {
 		account = k.accountKeeper.NewAccount(ctx, account)
 	}
 
+	// Interchain accounts have the sequence "1" and nil public key.
+	// Sequence never be increased without signing tx and sending this tx.
+	// But, it is impossible to send tx without publishing the public key.
+	// So, accounts that have the sequence "1" and nill public key are explicitly interchain accounts.
 	k.accountKeeper.SetAccount(ctx, account)
 
 	store := ctx.KVStore(k.storeKey)
-	// Ignore that which chain makes the interchain account.
-	// Assume that only one to one communication exists for prototype version.
-	store.Set(address, []byte{1})
+	// Save the identifier for each address to check where the interchain account is made from.
+	store.Set(address, []byte(identifier))
 
 	return nil
 }
