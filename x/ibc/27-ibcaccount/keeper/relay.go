@@ -138,10 +138,20 @@ func (k Keeper) RunTx(ctx sdk.Context, sourcePort, sourceChannel string, tx type
 
 	events := ctx.EventManager().Events()
 
+	// Use cache context.
+	// Receive packet msg should succeed regardless of the result of logic.
+	// But, if we just return the success even though handler is failed,
+	// the leftovers of state transition in handler will remain.
+	// However, this can make the unexpected error.
+	// To solve this problem, use cache context instead of context,
+	// and write the state transition if handler succeeds.
+	cacheContext, writeFn := ctx.CacheContext()
+	err = nil
 	for _, msg := range msgs {
-		result, err := k.RunMsg(ctx, msg)
-		if err != nil {
-			return result, err
+		result, msgErr := k.RunMsg(cacheContext, msg)
+		if msgErr != nil {
+			err = msgErr
+			break
 		}
 
 		data = append(data, result.Data...)
@@ -152,6 +162,13 @@ func (k Keeper) RunTx(ctx sdk.Context, sourcePort, sourceChannel string, tx type
 			logs = append(logs, result.Log)
 		}
 	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Write the state transitions if all handlers succeed.
+	writeFn()
 
 	return &sdk.Result{
 		Data:   data,
