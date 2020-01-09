@@ -38,8 +38,6 @@ func (k Keeper) OnChanOpenInit(
 		return sdkerrors.Wrap(ibctypes.ErrInvalidVersion, "version must be blank")
 	}
 
-	// NOTE: as the escrow address is generated from both the port and channel IDs
-	// there's no need to store it on a map.
 	return nil
 }
 
@@ -76,8 +74,6 @@ func (k Keeper) OnChanOpenTry(
 		return sdkerrors.Wrap(ibctypes.ErrInvalidVersion, "counterparty version must be blank")
 	}
 
-	// NOTE: as the escrow address is generated from both the port and channel IDs
-	// there's no need to store it on a map.
 	return nil
 }
 
