@@ -4,9 +4,6 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-var _ IbcPacketData = RegisterIBCAccountPacketData{}
-var _ IbcPacketData = RunTxPacketData{}
-
 type RegisterIBCAccountPacketData struct {
 	Salt string `json:"salt"`
 }

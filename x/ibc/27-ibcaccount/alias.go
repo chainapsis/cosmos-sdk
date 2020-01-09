@@ -34,6 +34,7 @@ type (
 	ChannelKeeper    = types.ChannelKeeper
 	AccountKeeper    = types.AccountKeeper
 
+	MsgRecvPacket                = types.MsgRecvPacket
 	RegisterIBCAccountPacketData = types.RegisterIBCAccountPacketData
 	RunTxPacketData              = types.RunTxPacketData
 )

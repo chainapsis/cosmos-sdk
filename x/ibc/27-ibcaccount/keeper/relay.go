@@ -5,10 +5,48 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	channel "github.com/cosmos/cosmos-sdk/x/ibc/04-channel"
+	channelexported "github.com/cosmos/cosmos-sdk/x/ibc/04-channel/exported"
+	commitment "github.com/cosmos/cosmos-sdk/x/ibc/23-commitment"
 	"github.com/cosmos/cosmos-sdk/x/ibc/27-ibcaccount/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 	"strings"
 )
+
+// ReceivePacket handles receiving packet
+func (k Keeper) ReceivePacket(ctx sdk.Context, packet channelexported.PacketI, proof commitment.ProofI, height uint64) error {
+	_, err := k.channelKeeper.RecvPacket(ctx, packet, proof, height, []byte{}, k.boundedCapability)
+	if err != nil {
+		return err
+	}
+
+	var data types.InterchainAccountPacketData
+	err = k.cdc.UnmarshalBinaryBare(packet.GetData(), &data)
+	if err != nil {
+		return sdkerrors.Wrap(err, "invalid packet data")
+	}
+
+	switch packetData := data.(type) {
+	case types.RegisterIBCAccountPacketData:
+		err := packetData.ValidateBasic()
+		if err != nil {
+			return err
+		}
+		return k.RegisterIBCAccount(ctx, packet.GetSourcePort(), packet.GetSourceChannel(), packetData.Salt)
+	case types.RunTxPacketData:
+		err := packetData.ValidateBasic()
+		if err != nil {
+			return err
+		}
+		tx, err := k.DeserializeTx(ctx, packetData.TxBytes)
+		if err != nil {
+			return err
+		}
+		_, err = k.RunTx(ctx, packet.GetSourcePort(), packet.GetSourceChannel(), tx)
+		return err
+	}
+
+	panic("unexpected packet data")
+}
 
 func (k Keeper) RegisterIBCAccount(
 	ctx sdk.Context,

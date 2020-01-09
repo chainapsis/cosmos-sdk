@@ -1,13 +1,11 @@
 package keeper
 
 import (
-	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	channel "github.com/cosmos/cosmos-sdk/x/ibc/04-channel"
 	channelexported "github.com/cosmos/cosmos-sdk/x/ibc/04-channel/exported"
 	port "github.com/cosmos/cosmos-sdk/x/ibc/05-port"
-	"github.com/cosmos/cosmos-sdk/x/ibc/27-ibcaccount/types"
 	ibctypes "github.com/cosmos/cosmos-sdk/x/ibc/types"
 	"strings"
 )
@@ -111,29 +109,8 @@ func (k Keeper) OnChanCloseConfirm(ctx sdk.Context, portID, channelID string) er
 
 // onRecvPacket is called when an FTTransfer packet is received
 // nolint: unused
-func (k Keeper) OnRecvPacket(ctx sdk.Context, packet channelexported.PacketI, data types.IbcPacketData) error {
-	switch packetData := data.(type) {
-	case types.RegisterIBCAccountPacketData:
-	case types.RunTxPacketData:
-		fmt.Println(packetData)
-		//interchainAccountTx, err := k.DeserializeTx(ctx, packetData.TxBytes)
-		//if err != nil {
-		//	return sdk.ErrInternal(err.Error())
-		//}
-		//return k.RunTx(ctx, interchainAccountTx)
-	}
-
-	//var data types.IbcPacketData
-	//
-	//err := k.cdc.UnmarshalBinaryBare(packet.GetData(), &data)
-	//if err != nil {
-	//	return sdkerrors.Wrap(err, "invalid packet data")
-	//}
-
-	//return k.ReceiveTransfer(
-	//	ctx, packet.GetSourcePort(), packet.GetSourceChannel(),
-	//	packet.GetDestPort(), packet.GetDestChannel(), data,
-	//)
+func (k Keeper) OnRecvPacket(ctx sdk.Context, packet channelexported.PacketI) error {
+	// TODO
 	return nil
 }
 
@@ -145,40 +122,11 @@ func (k Keeper) OnAcknowledgePacket(ctx sdk.Context, packet channelexported.Pack
 
 // nolint: unused
 func (k Keeper) OnTimeoutPacket(ctx sdk.Context, packet channelexported.PacketI) error {
-	//var data types.PacketData
-	//
-	//err := k.cdc.UnmarshalBinaryBare(packet.GetData(), &data)
-	//if err != nil {
-	//	return sdkerrors.Wrap(err, "invalid packet data")
-	//}
-	//
-	//// check the denom prefix
-	//prefix := types.GetDenomPrefix(packet.GetSourcePort(), packet.GetSourceChannel())
-	//coins := make(sdk.Coins, len(data.Amount))
-	//for i, coin := range data.Amount {
-	//	coin := coin
-	//	if !strings.HasPrefix(coin.Denom, prefix) {
-	//		return sdk.ErrInvalidCoins(fmt.Sprintf("%s doesn't contain the prefix '%s'", coin.Denom, prefix))
-	//	}
-	//	coins[i] = sdk.NewCoin(coin.Denom[len(prefix):], coin.Amount)
-	//}
-	//
-	//if data.Source {
-	//	escrowAddress := types.GetEscrowAddress(packet.GetDestPort(), packet.GetDestChannel())
-	//	return k.bankKeeper.SendCoins(ctx, escrowAddress, data.Sender, coins)
-	//}
-	//
-	//// mint from supply
-	//err = k.supplyKeeper.MintCoins(ctx, types.GetModuleAccountName(), data.Amount)
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//return k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.GetModuleAccountName(), data.Sender, data.Amount)
+	// TODO
 	return nil
 }
 
 // nolint: unused
 func (k Keeper) OnTimeoutPacketClose(_ sdk.Context, _ channelexported.PacketI) {
-	panic("can't happen, only unordered channels allowed")
+	// TODO
 }

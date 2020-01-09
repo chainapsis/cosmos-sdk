@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	channelexported "github.com/cosmos/cosmos-sdk/x/ibc/04-channel/exported"
 	"github.com/cosmos/cosmos-sdk/x/ibc/27-ibcaccount/types"
 	ibctypes "github.com/cosmos/cosmos-sdk/x/ibc/types"
 	"github.com/tendermint/tendermint/libs/log"
@@ -54,16 +53,6 @@ func NewKeeper(
 		accountKeeper: accountKeeper,
 		router:        router,
 	}
-}
-
-// todo: This will be removed when the routing module(ics26) is implemented.
-func (k Keeper) UnmarshalPacketData(packet channelexported.PacketI) (types.IbcPacketData, error) {
-	var data types.IbcPacketData
-	err := k.counterpartyCdc.UnmarshalBinaryBare(packet.GetData(), &data)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
 }
 
 // Logger returns a module-specific logger.

@@ -60,21 +60,10 @@ func NewHandler(k Keeper) sdk.Handler {
 			return transfer.HandleMsgTransfer(ctx, k.TransferKeeper, msg)
 
 		case transfer.MsgRecvPacket:
-			data, err := k.IbcaccountKeeper.UnmarshalPacketData(msg.Packet)
-			if err != nil {
-				return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
-			}
-
-			switch packetData := data.(type) {
-			case ibcaccount.RegisterIBCAccountPacketData:
-				sourcePort := msg.Packet.GetSourcePort()
-				sourceChannel := msg.Packet.GetSourceChannel()
-				return ibcaccount.HandleRegisterIBCAccount(ctx, k.IbcaccountKeeper, sourcePort, sourceChannel, packetData)
-			case ibcaccount.RunTxPacketData:
-				return ibcaccount.HandleRunTx(ctx, k.IbcaccountKeeper, packetData)
-			}
-
 			return transfer.HandleMsgRecvPacket(ctx, k.TransferKeeper, msg)
+
+		case ibcaccount.MsgRecvPacket:
+			return ibcaccount.HandleMsgRecvPacket(ctx, k.IbcaccountKeeper, msg)
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized IBC message type: %T", msg)
 		}
