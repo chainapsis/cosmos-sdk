@@ -31,6 +31,7 @@ func (k Keeper) ReceivePacket(ctx sdk.Context, packet channelexported.PacketI, p
 		if err != nil {
 			return err
 		}
+		// TODO: Send acknowledgement packet as generated address
 		return k.RegisterIBCAccount(ctx, packet.GetSourcePort(), packet.GetSourceChannel(), packetData.Salt)
 	case types.RunTxPacketData:
 		err := packetData.ValidateBasic()
@@ -41,6 +42,7 @@ func (k Keeper) ReceivePacket(ctx sdk.Context, packet channelexported.PacketI, p
 		if err != nil {
 			return err
 		}
+		// TODO: Send acknowledgement packet as 0x0 if run tx succeeds or as non 0x0 if run tx fails.
 		_, err = k.RunTx(ctx, packet.GetSourcePort(), packet.GetSourceChannel(), tx)
 		return err
 	}
