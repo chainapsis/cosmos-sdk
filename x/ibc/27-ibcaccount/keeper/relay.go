@@ -158,7 +158,7 @@ func (k Keeper) CreateOutgoingPacket(
 func (k Keeper) DeserializeTx(ctx sdk.Context, txBytes []byte) (types.InterchainAccountTx, error) {
 	tx := types.InterchainAccountTx{}
 
-	err := k.counterpartyCdc.UnmarshalBinaryBare(txBytes, &tx)
+	err := k.cdc.UnmarshalBinaryBare(txBytes, &tx)
 	return tx, err
 }
 
