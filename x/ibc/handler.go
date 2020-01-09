@@ -62,6 +62,8 @@ func NewHandler(k Keeper) sdk.Handler {
 		case transfer.MsgRecvPacket:
 			return transfer.HandleMsgRecvPacket(ctx, k.TransferKeeper, msg)
 
+		// MsgRecvPacket in ibcaccount is just duplicated MsgRecvPacket in 20-transfer
+		// TODO: Remove this when ics-026 (routing) is implemented.
 		case ibcaccount.MsgRecvPacket:
 			return ibcaccount.HandleMsgRecvPacket(ctx, k.IbcaccountKeeper, msg)
 		default:
