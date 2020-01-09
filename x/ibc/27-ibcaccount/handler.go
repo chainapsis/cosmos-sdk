@@ -5,32 +5,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/ibc/27-ibcaccount/types"
 )
 
-func HandleRegisterIBCAccount(ctx sdk.Context, k Keeper, sourcePort, sourceChannel string, packet RegisterIBCAccountPacketData) (*sdk.Result, error) {
-	err := k.RegisterIBCAccount(ctx, sourcePort, sourceChannel, packet.Salt)
-	if err != nil {
-		return nil, err
-	}
-
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-		),
-	)
-
-	return &sdk.Result{
-		Events: ctx.EventManager().Events(),
-	}, nil
-}
-
-func HandleRunTx(ctx sdk.Context, k Keeper, sourcePort, sourceChannel string, packet RunTxPacketData) (*sdk.Result, error) {
-	interchainAccountTx, err := k.DeserializeTx(ctx, packet.TxBytes)
-	if err != nil {
-		return nil, err
-	}
-	return k.RunTx(ctx, sourcePort, sourceChannel, interchainAccountTx)
-}
-
 // HandleMsgRecvPacket defines the sdk.Handler for MsgRecvPacket
 func HandleMsgRecvPacket(ctx sdk.Context, k Keeper, msg MsgRecvPacket) (*sdk.Result, error) {
 	err := k.ReceivePacket(ctx, msg.Packet, msg.Proofs[0], msg.Height)
