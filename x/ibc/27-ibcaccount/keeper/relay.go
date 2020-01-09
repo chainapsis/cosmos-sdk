@@ -123,9 +123,24 @@ func (k Keeper) CreateOutgoingPacket(
 	sourceChannel,
 	destinationPort,
 	destinationChannel string,
-	msgs []sdk.Msg,
+	data interface{},
 ) error {
 	if chainType == types.CosmosSdkChainType {
+		if data == nil {
+			return types.ErrInvalidOutgoingData
+		}
+
+		var msgs []sdk.Msg
+
+		switch data := data.(type) {
+		case []sdk.Msg:
+			msgs = data
+		case sdk.Msg:
+			msgs = []sdk.Msg{data}
+		default:
+			return types.ErrInvalidOutgoingData
+		}
+
 		interchainAccountTx := types.InterchainAccountTx{Msgs: msgs}
 
 		txBytes, err := k.counterpartyCdc.MarshalBinaryBare(interchainAccountTx)

@@ -21,6 +21,7 @@ var (
 	// Errors
 	ErrAccountAlreadyExist  = types.ErrAccountAlreadyExist
 	ErrUnsupportedChainType = types.ErrUnsupportedChainType
+	ErrInvalidOutgoingData  = types.ErrInvalidOutgoingData
 	ErrContentIsEmpty       = types.ErrContentIsEmpty
 
 	// variable aliases
