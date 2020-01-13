@@ -155,6 +155,9 @@ func (k Keeper) CreateOutgoingPacket(
 			TxBytes: txBytes,
 		}
 		pdBytes, err := k.counterpartyCdc.MarshalBinaryBare(packetData)
+		if err != nil {
+			return err
+		}
 
 		packet := channel.NewPacket(
 			seq,
