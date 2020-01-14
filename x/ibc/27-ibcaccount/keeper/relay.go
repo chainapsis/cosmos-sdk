@@ -116,6 +116,43 @@ func (k Keeper) GenerateAddress(identifier string, salt string) ([]byte, error) 
 	return hashsum, nil
 }
 
+func (k Keeper) CreateInterchainAccount(ctx sdk.Context, sourcePort, sourceChannel, salt string) error {
+	// get the port and channel of the counterparty
+	sourceChan, found := k.channelKeeper.GetChannel(ctx, sourcePort, sourceChannel)
+	if !found {
+		return sdkerrors.Wrap(channel.ErrChannelNotFound, sourceChannel)
+	}
+
+	destinationPort := sourceChan.Counterparty.PortID
+	destinationChannel := sourceChan.Counterparty.ChannelID
+
+	// get the next sequence
+	sequence, found := k.channelKeeper.GetNextSequenceSend(ctx, sourcePort, sourceChannel)
+	if !found {
+		return channel.ErrSequenceSendNotFound
+	}
+
+	packetData := types.RegisterIBCAccountPacketData{
+		Salt: salt,
+	}
+	pdBytes, err := k.counterpartyCdc.MarshalBinaryBare(packetData)
+	if err != nil {
+		return err
+	}
+
+	packet := channel.NewPacket(
+		sequence,
+		uint64(ctx.BlockHeight())+DefaultPacketTimeout,
+		sourcePort,
+		sourceChannel,
+		destinationPort,
+		destinationChannel,
+		pdBytes,
+	)
+
+	return k.channelKeeper.SendPacket(ctx, packet, k.boundedCapability)
+}
+
 func (k Keeper) CreateOutgoingPacket(
 	ctx sdk.Context,
 	seq uint64,
