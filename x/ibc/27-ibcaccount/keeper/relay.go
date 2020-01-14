@@ -56,11 +56,6 @@ func (k Keeper) RegisterIBCAccount(
 	sourceChannel,
 	salt string,
 ) error {
-	_, found := k.channelKeeper.GetChannel(ctx, sourcePort, sourceChannel)
-	if !found {
-		return sdkerrors.Wrap(channel.ErrChannelNotFound, sourceChannel)
-	}
-
 	identifier := types.GetIdentifier(sourcePort, sourceChannel)
 	address, err := k.GenerateAddress(identifier, salt)
 	if err != nil {
