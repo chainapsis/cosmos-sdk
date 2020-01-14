@@ -94,7 +94,6 @@ func (k Keeper) CreateAccount(ctx sdk.Context, address sdk.AccAddress, identifie
 		if err != nil {
 			return err
 		}
-		account = k.accountKeeper.NewAccount(ctx, account)
 	}
 
 	// Interchain accounts have the sequence "1" and nil public key.
