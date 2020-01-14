@@ -2,14 +2,18 @@ package keeper_test
 
 import (
 	"fmt"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	clienttypestm "github.com/cosmos/cosmos-sdk/x/ibc/02-client/types/tendermint"
 	connection "github.com/cosmos/cosmos-sdk/x/ibc/03-connection"
 	channel "github.com/cosmos/cosmos-sdk/x/ibc/04-channel"
 	commitment "github.com/cosmos/cosmos-sdk/x/ibc/23-commitment"
+	"github.com/cosmos/cosmos-sdk/x/ibc/27-ibcaccount/types"
 	ibctypes "github.com/cosmos/cosmos-sdk/x/ibc/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/tmhash"
+
+	"github.com/cosmos/cosmos-sdk/x/bank"
 )
 
 func (suite *KeeperTestSuite) createClient() {
@@ -95,7 +99,7 @@ func (suite *KeeperTestSuite) queryProof(key []byte) (proof commitment.Proof, he
 }
 
 func (suite *KeeperTestSuite) TestSendRegisterIBCAccount() {
-	err := suite.app.IBCKeeper.IbcaccountKeeper.RegisterIBCAccount(suite.ctx, testPort1, testChannel1, testSalt)
+	err := suite.app.IBCKeeper.IbcaccountKeeper.CreateInterchainAccount(suite.ctx, testPort1, testChannel1, testSalt)
 	suite.Error(err) // channel does not exist
 
 	suite.createChannel(testPort1, testChannel1, testConnection, testPort2, testChannel2, channel.OPEN)
@@ -127,4 +131,104 @@ func (suite *KeeperTestSuite) TestReceiveRegisterIBCAccount() {
 	suite.Equal(uint64(1), createdAccount.GetSequence())
 	// Public key should be nil
 	suite.Equal(crypto.PubKey(nil), createdAccount.GetPubKey())
+}
+
+func (suite *KeeperTestSuite) TestReceivePacket() {
+	packetSeq := uint64(1)
+	packetTimeout := uint64(100)
+
+	packetDataBz := []byte("invaliddata")
+	packet := channel.NewPacket(packetSeq, packetTimeout, testPort2, testChannel2, testPort2, testChannel1, packetDataBz)
+	packetCommitmentPath := channel.KeyPacketCommitment(testPort2, testChannel2, packetSeq)
+
+	suite.app.IBCKeeper.ChannelKeeper.SetPacketCommitment(suite.ctx, testPort2, testChannel2, packetSeq, []byte("invalidcommitment"))
+	suite.updateClient()
+	proofPacket, proofHeight := suite.queryProof(packetCommitmentPath)
+
+	suite.createChannel(testPort2, testChannel1, testConnection, testPort2, testChannel2, channel.OPEN)
+	err := suite.app.IBCKeeper.TransferKeeper.ReceivePacket(suite.ctx, packet, proofPacket, uint64(proofHeight))
+	suite.Error(err) // invalid port id
+
+	packet.DestinationPort = testPort1
+	suite.createChannel(testPort1, testChannel1, testConnection, testPort2, testChannel2, channel.OPEN)
+	err = suite.app.IBCKeeper.TransferKeeper.ReceivePacket(suite.ctx, packet, proofPacket, uint64(proofHeight))
+	suite.Error(err) // packet membership verification failed due to invalid counterparty packet commitment
+
+	suite.app.IBCKeeper.ChannelKeeper.SetPacketCommitment(suite.ctx, testPort2, testChannel2, packetSeq, packetDataBz)
+	suite.updateClient()
+	proofPacket, proofHeight = suite.queryProof(packetCommitmentPath)
+	err = suite.app.IBCKeeper.TransferKeeper.ReceivePacket(suite.ctx, packet, proofPacket, uint64(proofHeight))
+	suite.Error(err) // invalid packet data
+
+	registerIAAccountPacketData := types.RegisterIBCAccountPacketData{
+		Salt: testSalt,
+	}
+	packetDataBz, _ = suite.cdc.MarshalBinaryBare(registerIAAccountPacketData)
+	packet = channel.NewPacket(packetSeq, packetTimeout, testPort2, testChannel2, testPort1, testChannel1, packetDataBz)
+
+	suite.app.IBCKeeper.ChannelKeeper.SetPacketCommitment(suite.ctx, testPort2, testChannel2, packetSeq, packetDataBz)
+	suite.updateClient()
+	proofPacket, proofHeight = suite.queryProof(packetCommitmentPath)
+	err = suite.app.IBCKeeper.IbcaccountKeeper.ReceivePacket(suite.ctx, packet, proofPacket, uint64(proofHeight))
+	suite.NoError(err) // successfully executed
+
+	identifier := fmt.Sprintf("%s/%s", testPort2, testChannel2)
+	hash := tmhash.NewTruncated()
+	expectedAddress := hash.Sum([]byte(identifier + testSalt))
+
+	// Interchain account should be created with expected address
+	createdAccount := suite.app.AccountKeeper.GetAccount(suite.ctx, expectedAddress)
+	suite.NotNil(createdAccount)
+	// Sequence should be 1
+	suite.Equal(uint64(1), createdAccount.GetSequence())
+	// Public key should be nil
+	suite.Equal(crypto.PubKey(nil), createdAccount.GetPubKey())
+
+	// Add some test coin to created interchain account
+	err = createdAccount.SetCoins(sdk.Coins{
+		sdk.Coin{Amount: sdk.NewInt(1000), Denom: "test"},
+	})
+	suite.NoError(err)
+	suite.app.AccountKeeper.SetAccount(suite.ctx, createdAccount)
+
+	sendFromIBCAccountMsg := bank.NewMsgSend(expectedAddress, []byte("normalAccount"), sdk.Coins{
+		sdk.Coin{Amount: sdk.NewInt(500), Denom: "test"},
+	})
+	tx := types.InterchainAccountTx{Msgs: []sdk.Msg{sendFromIBCAccountMsg}}
+	txBytes, err := suite.cdc.MarshalBinaryBare(tx)
+	runTxPacketData := types.RunTxPacketData{TxBytes: txBytes}
+	packetDataBz, _ = suite.cdc.MarshalBinaryBare(runTxPacketData)
+	packet = channel.NewPacket(packetSeq, packetTimeout, testPort2, testChannel2, testPort1, testChannel1, packetDataBz)
+
+	suite.app.IBCKeeper.ChannelKeeper.SetPacketCommitment(suite.ctx, testPort2, testChannel2, packetSeq, packetDataBz)
+	suite.updateClient()
+	proofPacket, proofHeight = suite.queryProof(packetCommitmentPath)
+	err = suite.app.IBCKeeper.IbcaccountKeeper.ReceivePacket(suite.ctx, packet, proofPacket, uint64(proofHeight))
+	suite.NoError(err) // successfully executed
+
+	// Interchain Account should have sent some asset
+	createdAccount = suite.app.AccountKeeper.GetAccount(suite.ctx, expectedAddress)
+	suite.NotNil(createdAccount)
+	suite.Equal(sdk.NewCoin("test", sdk.NewInt(500)).String(), createdAccount.GetCoins()[0].String())
+
+	// Normal account should have received some asset
+	normalAccount := suite.app.AccountKeeper.GetAccount(suite.ctx, []byte("normalAccount"))
+	suite.NotNil(normalAccount)
+	suite.Equal(sdk.NewCoin("test", sdk.NewInt(500)).String(), normalAccount.GetCoins()[0].String())
+
+	// Normal account can't send msgs via IBC run tx
+	sendFromNormalAccountMsg := bank.NewMsgSend([]byte("normalAccount"), expectedAddress, sdk.Coins{
+		sdk.Coin{Amount: sdk.NewInt(500), Denom: "test"},
+	})
+	tx = types.InterchainAccountTx{Msgs: []sdk.Msg{sendFromNormalAccountMsg}}
+	txBytes, err = suite.cdc.MarshalBinaryBare(tx)
+	runTxPacketData = types.RunTxPacketData{TxBytes: txBytes}
+	packetDataBz, _ = suite.cdc.MarshalBinaryBare(runTxPacketData)
+	packet = channel.NewPacket(packetSeq, packetTimeout, testPort2, testChannel2, testPort1, testChannel1, packetDataBz)
+
+	suite.app.IBCKeeper.ChannelKeeper.SetPacketCommitment(suite.ctx, testPort2, testChannel2, packetSeq, packetDataBz)
+	suite.updateClient()
+	proofPacket, proofHeight = suite.queryProof(packetCommitmentPath)
+	err = suite.app.IBCKeeper.IbcaccountKeeper.ReceivePacket(suite.ctx, packet, proofPacket, uint64(proofHeight))
+	suite.Error(err) // unauthorized
 }
