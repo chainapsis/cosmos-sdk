@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/crypto"
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -14,7 +13,6 @@ import (
 	clientexported "github.com/cosmos/cosmos-sdk/x/ibc/02-client/exported"
 	connection "github.com/cosmos/cosmos-sdk/x/ibc/03-connection"
 	channel "github.com/cosmos/cosmos-sdk/x/ibc/04-channel"
-	"github.com/cosmos/cosmos-sdk/x/ibc/20-transfer/types"
 )
 
 // define constants used for testing
@@ -59,17 +57,6 @@ func (suite *KeeperTestSuite) SetupTest() {
 
 	suite.createClient()
 	suite.createConnection(connection.OPEN)
-}
-
-func (suite *KeeperTestSuite) TestGetTransferAccount() {
-	expectedMaccName := types.GetModuleAccountName()
-	expectedMaccAddr := sdk.AccAddress(crypto.AddressHash([]byte(expectedMaccName)))
-
-	macc := suite.app.IBCKeeper.TransferKeeper.GetTransferAccount(suite.ctx)
-
-	suite.NotNil(macc)
-	suite.Equal(expectedMaccName, macc.GetName())
-	suite.Equal(expectedMaccAddr, macc.GetAddress())
 }
 
 func TestKeeperTestSuite(t *testing.T) {
